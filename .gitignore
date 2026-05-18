@@ -1,0 +1,41 @@
+# API 키 - 절대 GitHub에 올리지 마세요!
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+env/
+.venv/
+
+# 실험 결과 (용량 큼 - 필요시 주석 해제)
+# results/
+
+# Node.js (보고서 생성용)
+node_modules/
+package-lock.json
+package.json
+_tmp_report_*.js
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 임시 파일
+*.log
+*.tmp
