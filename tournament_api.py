@@ -25,10 +25,14 @@ MODEL_DISPLAY = {t: MODEL_CONFIG[t]["display"] for t in TEAMS}
 # ── API 키 확인 ───────────────────────────────────────────────
 def check_api_keys() -> bool:
     required = {
-        "gpt":      "OPENAI_API_KEY",
-        "claude":   "ANTHROPIC_API_KEY",
-        "gemini":   "GOOGLE_API_KEY",
-        "deepseek": "DEEPSEEK_API_KEY",
+        "llama":       "GROQ_API_KEY",
+        "gemma":       "GROQ_API_KEY",
+        "qwen":        "GROQ_API_KEY",
+        "deepseek_r1": "GROQ_API_KEY",
+        "gpt":         "OPENAI_API_KEY",
+        "claude":      "ANTHROPIC_API_KEY",
+        "gemini":      "GOOGLE_API_KEY",
+        "deepseek":    "DEEPSEEK_API_KEY",
     }
     all_ok = True
     print("\n[사전 확인] API 키 상태 점검 중...")
@@ -108,10 +112,16 @@ def run_match(match_id: int, active_teams: list, verbose: bool = True) -> dict:
 def _estimate_cost(team: str, tokens: int) -> float:
     """팀별 API 비용 추정 (2024년 기준 입력+출력 평균)"""
     price_per_1k = {
-        "gpt":      0.010,   # GPT-4o: ~$5/$15 per 1M → 평균 $10
-        "claude":   0.009,   # Claude Sonnet 4: ~$3/$15 per 1M → 평균 $9
-        "gemini":   0.00125, # Gemini 1.5 Pro: ~$1.25/$5 per 1M → 평균 $1.25
-        "deepseek": 0.00028, # DeepSeek V3: ~$0.27/$1.1 per 1M → 평균 $0.28
+        # 무료 (Groq)
+        "llama":       0.0,
+        "gemma":       0.0,
+        "qwen":        0.0,
+        "deepseek_r1": 0.0,
+        # 유료
+        "gpt":         0.010,
+        "claude":      0.009,
+        "gemini":      0.00125,
+        "deepseek":    0.00028,
     }
     rate = price_per_1k.get(team, 0.005)
     return tokens / 1000 * rate
@@ -124,10 +134,14 @@ def run_tournament(n_matches: int = 3):
     # 유효한 API 키가 있는 팀만 필터링
     active_teams = []
     key_map = {
-        "gpt":      "OPENAI_API_KEY",
-        "claude":   "ANTHROPIC_API_KEY",
-        "gemini":   "GOOGLE_API_KEY",
-        "deepseek": "DEEPSEEK_API_KEY",
+        "llama":       "GROQ_API_KEY",
+        "gemma":       "GROQ_API_KEY",
+        "qwen":        "GROQ_API_KEY",
+        "deepseek_r1": "GROQ_API_KEY",
+        "gpt":         "OPENAI_API_KEY",
+        "claude":      "ANTHROPIC_API_KEY",
+        "gemini":      "GOOGLE_API_KEY",
+        "deepseek":    "DEEPSEEK_API_KEY",
     }
     for team in TEAMS:
         val = os.getenv(key_map[team], "")

@@ -1,6 +1,8 @@
 """
 api_agent.py - Phase 2 실제 API 기반 LLM 전쟁 지휘관
-GPT-4o / Claude Sonnet 4 / Gemini 1.5 Pro / DeepSeek V3
+
+[무료] Groq: llama / gemma / qwen / deepseek_r1
+[유료] OpenAI: gpt / Anthropic: claude / Google: gemini / DeepSeek: deepseek
 """
 
 import os, json, re, time
@@ -10,9 +12,33 @@ from data_logger import DSLogger
 
 load_dotenv()
 
-TEAMS = ["gpt", "claude", "gemini", "deepseek"]
+# 기본 팀 구성 - 무료 Groq 4팀
+# 유료 API 추가 시 원하는 팀으로 교체 가능
+TEAMS = ["llama", "gemma", "qwen", "deepseek_r1"]
 
 MODEL_CONFIG = {
+    # ── 무료: Groq (오픈소스 모델) ─────────────────────
+    "llama": {
+        "display":  "Llama 3.1 8B (Groq/Meta)",
+        "provider": "groq",
+        "model":    "llama-3.1-8b-instant",
+    },
+    "gemma": {
+        "display":  "Gemma 2 9B (Groq/Google)",
+        "provider": "groq",
+        "model":    "gemma2-9b-it",
+    },
+    "qwen": {
+        "display":  "Qwen QwQ 32B (Groq/Alibaba)",
+        "provider": "groq",
+        "model":    "qwen-qwq-32b",
+    },
+    "deepseek_r1": {
+        "display":  "DeepSeek R1 70B (Groq)",
+        "provider": "groq",
+        "model":    "deepseek-r1-distill-llama-70b",
+    },
+    # ── 유료: 상용 API ──────────────────────────────────
     "gpt": {
         "display":  "GPT-4o (OpenAI)",
         "provider": "openai",
@@ -112,6 +138,12 @@ class APIAgent:
             import google.generativeai as genai
             genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
             self._client = genai.GenerativeModel(self.config["model"])
+        elif provider == "groq":
+            from openai import OpenAI
+            self._client = OpenAI(
+                api_key=os.getenv("GROQ_API_KEY"),
+                base_url="https://api.groq.com/openai/v1"
+            )
         elif provider == "deepseek":
             from openai import OpenAI
             self._client = OpenAI(
@@ -174,16 +206,20 @@ class APIAgent:
         model    = self.config["model"]
 
         try:
-            if provider == "openai":
-                resp = self._client.chat.completions.create(
+            if provider in ("openai", "groq", "deepseek"):
+                # OpenAI 호환 API (Groq, DeepSeek 포함)
+                kwargs = dict(
                     model=model,
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user",   "content": prompt},
                     ],
                     temperature=0.3, max_tokens=600,
-                    response_format={"type": "json_object"},
                 )
+                # Groq는 json_object 포맷 미지원 모델 있어서 openai만 적용
+                if provider == "openai":
+                    kwargs["response_format"] = {"type": "json_object"}
+                resp = self._client.chat.completions.create(**kwargs)
                 self.total_tokens += resp.usage.total_tokens
                 return resp.choices[0].message.content
 
@@ -203,18 +239,6 @@ class APIAgent:
                     generation_config={"temperature": 0.3, "max_output_tokens": 600},
                 )
                 return resp.text
-
-            elif provider == "deepseek":
-                resp = self._client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user",   "content": prompt},
-                    ],
-                    temperature=0.3, max_tokens=600,
-                )
-                self.total_tokens += resp.usage.total_tokens
-                return resp.choices[0].message.content
 
         except Exception as e:
             self.error_count += 1
